@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.dao.ContentMapper">
+
+    <sql id="SELECT_CLOUMN">
+        id AS id,
+        city AS city,
+        entry_time AS entryTime,
+        `type` AS type,
+        content AS content,
+        status AS status,
+        createdTime AS createdTime
+    </sql>
+
+
+    <insert id="addNewContent">
+        INSERT INTO content
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="addEn.city != null">
+                city,
+            </if>
+            <if test="addEn.entryTime != null">
+                entry_time,
+            </if>
+            <if test="addEn.type != null">
+                `type` ,
+            </if>
+            <if test="addEn.content != null">
+                content ,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="addEn.city != null">
+                #{addEn.city},
+            </if>
+            <if test="addEn.entryTime != null">
+                #{addEn.entryTime},
+            </if>
+            <if test="addEn.type != null">
+                #{addEn.type},
+            </if>
+            <if test="addEn.content != null">
+                #{addEn.content},
+            </if>
+        </trim>
+
+    </insert>
+
+    <update id="updDelById">
+        UPDATE content
+        SET is_delete = 1,
+            deletedTime = NOW()
+        where
+          id = #{id}
+    </update>
+
+    <update id="updContentById">
+        update content
+        <set >
+        <if test="updEn.city != null" >
+            city = #{updEn.city,jdbcType=VARCHAR},
+        </if>
+        <if test="updEn.entryTime != null">
+            entry_time = #{updEn.entryTime},
+        </if>
+        <if test="updEn.type != null">
+            `type` = #{updEn.type},
+        </if>
+        <if test="updEn.content != null">
+            content = #{updEn.content},
+        </if>
+        <if test="updEn.status != null and updEn.status > 0">
+            status = #{updEn.status},
+        </if>
+        <if test="updEn.updatedTime != null">
+            updatedTime = #{updEn.updatedTime}
+        </if>
+        </set>
+        where id =#{id}
+    </update>
+
+    <select id="findSingleContentById" resultType="com.haier.model.ContentEntity">
+        SELECT
+        <include refid="SELECT_CLOUMN"/>
+        FROM content
+        WHERE id =#{id}
+    </select>
+
+    <select id="findContentsBy" resultType="com.haier.model.ContentEntity">
+        SELECT
+        <include refid="SELECT_CLOUMN"/>
+        FROM content
+        <where>
+            <if test="findEn.id != null">
+                AND id = #{findEn.id}
+            </if>
+            <if test="findEn.city != null">
+                AND city = #{findEn.city}
+            </if>
+            <if test="findEn.entryTime != null">
+                AND entry_time = #{findEn.entryTime}
+            </if>
+            <if test="findEn.status != null">
+                AND status = #{findEn.status}
+            </if>
+            <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
+                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
+            </if>
+        </where>
+        <if test="findEn.orderClause != null and findEn.orderClause != ''">
+            ORDER BY ${findEn.orderClause}
+        </if>
+        <if test="findEn.startRow != null and findEn.startRow > -1 and findEn.pageSize != null and findEn.pageSize > 0">
+            LIMIT #{findEn.startRow,jdbcType=INTEGER}, #{findEn.pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+    <select id="countBy" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM content
+        <where>
+            <if test="findEn.id != null">
+                AND id = #{findEn.id}
+            </if>
+            <if test="findEn.city != null">
+                AND city = #{findEn.city}
+            </if>
+            <if test="findEn.status != null">
+                AND status = #{findEn.status}
+            </if>
+            <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
+                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
