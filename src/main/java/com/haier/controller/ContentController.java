@@ -144,7 +144,7 @@ public class ContentController {
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public RespResult findItemById(
             @ApiParam(value = "模糊查询搜索条件", required = false) @RequestParam(name = "searchAttr", required = false) String searchAttr,
-            @ApiParam(value = "模块状态", required = false) @RequestParam(name = "status", required = false) Integer status,
+            @ApiParam(value = "模块状态(1:上线，2：下线，3：删除)", required = false) @RequestParam(name = "status", required = false) Integer status,
             @ApiParam(value = "页码", required = true) @RequestParam(name = "pageNo") Integer pageNo,
             @ApiParam(value = "每页长度", required = true) @RequestParam(name = "pageSize") Integer pageSize) {
         RespResult respResult = new RespResult();
@@ -154,7 +154,7 @@ public class ContentController {
         if (null == pageSize || pageSize <= 0) {
             pageSize = 10;
         }
-        if (status == null || status.equals(1) || status.equals(2)) {
+        if (status == null || status.equals(1) || status.equals(2) || status.equals(3)) {
             ContentEntityPo findEn = new ContentEntityPo();
             if (searchAttr != null && StringUtils.isNotEmpty(searchAttr.trim())) {
                 searchAttr = "%" + searchAttr + "%";

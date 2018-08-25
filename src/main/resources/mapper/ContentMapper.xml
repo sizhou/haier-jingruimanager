@@ -9,7 +9,8 @@
         `type` AS type,
         content AS content,
         status AS status,
-        createdTime AS createdTime
+        createdTime AS createdTime,
+        isDeleted AS isDelete
     </sql>
 
 
@@ -48,7 +49,7 @@
 
     <update id="updDelById">
         UPDATE content
-        SET is_delete = 1,
+        SET isDeleted = 1,
             deletedTime = NOW()
         where
           id = #{id}
@@ -103,6 +104,9 @@
             <if test="findEn.status != null">
                 AND status = #{findEn.status}
             </if>
+            <if test="findEn.isDelete != null">
+                AND isDeleted = #{findEn.isDelete}
+            </if>
             <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
                 AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
             </if>
@@ -125,8 +129,14 @@
             <if test="findEn.city != null">
                 AND city = #{findEn.city}
             </if>
+            <if test="findEn.entryTime != null">
+                AND entry_time = #{findEn.entryTime}
+            </if>
             <if test="findEn.status != null">
                 AND status = #{findEn.status}
+            </if>
+            <if test="findEn.isDelete != null">
+                AND isDeleted = #{findEn.isDelete}
             </if>
             <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
                 AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})

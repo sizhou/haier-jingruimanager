@@ -35,6 +35,8 @@ public class ContentEntity {
     private Long deletedBy;
     @JsonIgnore
     private Date    deletedTime;
+    @JsonIgnore
+    private Boolean isDelete;
 
 
 

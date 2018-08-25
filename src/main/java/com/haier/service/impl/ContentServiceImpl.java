@@ -17,6 +17,7 @@ import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class ContentServiceImpl implements ContentService {
@@ -82,7 +83,25 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public RespResult findContentsBy(ContentEntityPo findEn) {
         RespResult respResult = new RespResult();
+        if (null != findEn && null != findEn.getStatus() && findEn.getStatus() > 0) {
+            Integer status = findEn.getStatus();
+            if (1 == status) {
+                findEn.setStatus(1).setIsDelete(false);
+            } else if (2 == status) {
+                findEn.setStatus(2).setIsDelete(false);
+            } else if (3 == status) {
+                findEn.setStatus(null).setIsDelete(true);
+            } else {
+                findEn.setStatus(null).setIsDelete(null);
+            }
+        }
         List<ContentEntity> list = contentMapper.findContentsBy(findEn);
+        list.stream().forEach(c -> {
+//            System.out.println(c.getIsDelete());
+            if (Objects.nonNull(c.getIsDelete()) && c.getIsDelete()) {
+                c.setStatus(3);
+            }
+        });
         int totalCount = contentMapper.countBy(findEn);
         ContentListResp resp = new ContentListResp();
         resp.setPageNo(findEn.getPageNo());
@@ -97,15 +116,16 @@ public class ContentServiceImpl implements ContentService {
 
 
     @Override
-    public RespResult findAllTypeForCity(String city,String entryTime) {
+    public RespResult findAllTypeForCity(String city, String entryTime) {
         RespResult respResult = new RespResult();
         ContentEntityPo findEn = new ContentEntityPo();
         findEn.setCity(city);
         findEn.setOrderClause("entry_time");
-        if (null != entryTime || StringUtils.isNotEmpty(entryTime)){
+        if (null != entryTime || StringUtils.isNotEmpty(entryTime)) {
             findEn.setEntryTime(entryTime);
         }
         findEn.setStatus(1);
+        findEn.setIsDelete(false);
         List<ContentEntity> list = contentMapper.findContentsBy(findEn);
         ContentForCityResp resultData = null;
         List<ContentEntity> typeList;
