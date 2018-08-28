@@ -4,87 +4,119 @@
 
     <sql id="SELECT_CLOUMN">
         id AS id,
+        version AS version,
         city AS city,
         entry_time AS entryTime,
         `type` AS type,
         content AS content,
         status AS status,
+        remark AS remark,
+        category_id AS categoryId,
         createdTime AS createdTime,
         isDeleted AS isDelete
     </sql>
 
 
     <insert id="addNewContent">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
         INSERT INTO content
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="addEn.city != null">
+            <if test="city != null">
                 city,
             </if>
-            <if test="addEn.entryTime != null">
+            <if test="entryTime != null">
                 entry_time,
             </if>
-            <if test="addEn.type != null">
+            <if test="type != null">
                 `type` ,
             </if>
-            <if test="addEn.content != null">
+            <if test="content != null">
                 content ,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="categoryId != null">
+                category_id,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="addEn.city != null">
-                #{addEn.city},
+            <if test="city != null">
+                #{city},
             </if>
-            <if test="addEn.entryTime != null">
-                #{addEn.entryTime},
+            <if test="entryTime != null">
+                #{entryTime},
             </if>
-            <if test="addEn.type != null">
-                #{addEn.type},
+            <if test="type != null">
+                #{type},
             </if>
-            <if test="addEn.content != null">
-                #{addEn.content},
+            <if test="content != null">
+                #{content},
+            </if>
+            <if test="remark != null">
+                #{remark},
+            </if>
+            <if test="categoryId != null">
+                #{categoryId},
             </if>
         </trim>
 
     </insert>
 
-    <update id="updDelById">
+    <update id="updDelByVersion">
         UPDATE content
         SET isDeleted = 1,
             deletedTime = NOW()
         where
+          version = #{version}
+    </update>
+
+
+    <update id="updVersionById">
+        UPDATE content
+        SET version = #{id}
+        where
           id = #{id}
     </update>
 
-    <update id="updContentById">
+    <update id="updContentByVersion">
         update content
-        <set >
-        <if test="updEn.city != null" >
-            city = #{updEn.city,jdbcType=VARCHAR},
-        </if>
-        <if test="updEn.entryTime != null">
-            entry_time = #{updEn.entryTime},
-        </if>
-        <if test="updEn.type != null">
-            `type` = #{updEn.type},
-        </if>
-        <if test="updEn.content != null">
-            content = #{updEn.content},
-        </if>
-        <if test="updEn.status != null and updEn.status > 0">
-            status = #{updEn.status},
-        </if>
-        <if test="updEn.updatedTime != null">
-            updatedTime = #{updEn.updatedTime}
-        </if>
+        <set>
+            <if test="updEn.city != null">
+                city = #{updEn.city,jdbcType=VARCHAR},
+            </if>
+            <if test="updEn.entryTime != null">
+                entry_time = #{updEn.entryTime},
+            </if>
+            <if test="updEn.type != null">
+                `type` = #{updEn.type},
+            </if>
+            <if test="updEn.content != null">
+                content = #{updEn.content},
+            </if>
+            <if test="updEn.remark != null">
+                remark = #{updEn.remark},
+            </if>
+            <if test="updEn.status != null and updEn.status > 0">
+                status = #{updEn.status},
+            </if>
+            <if test="updEn.categoryId != null">
+                category_id = #{updEn.categoryId},
+            </if>
+            <if test="updEn.updatedTime != null">
+                updatedTime = #{updEn.updatedTime}
+            </if>
         </set>
-        where id =#{id}
+        where version =#{version}
     </update>
 
-    <select id="findSingleContentById" resultType="com.haier.model.ContentEntity">
+    <select id="findSingleContentByVersion" resultType="com.haier.model.ContentEntity">
         SELECT
         <include refid="SELECT_CLOUMN"/>
         FROM content
-        WHERE id =#{id}
+        WHERE version =#{version}
     </select>
 
     <select id="findContentsBy" resultType="com.haier.model.ContentEntity">
@@ -101,6 +133,9 @@
             <if test="findEn.entryTime != null">
                 AND entry_time = #{findEn.entryTime}
             </if>
+            <if test="findEn.type != null">
+                AND type = #{findEn.type}
+            </if>
             <if test="findEn.status != null">
                 AND status = #{findEn.status}
             </if>
@@ -108,7 +143,7 @@
                 AND isDeleted = #{findEn.isDelete}
             </if>
             <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
-                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
+                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr} OR type LIKE #{findEn.searchAttr})
             </if>
         </where>
         <if test="findEn.orderClause != null and findEn.orderClause != ''">
@@ -142,6 +177,22 @@
                 AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
             </if>
         </where>
+    </select>
+    <select id="listCategory" resultType="com.haier.model.CategoryEntity">
+        SELECT
+        id,
+        category_type AS categoryType,
+        category_name AS categoryName
+        FROM
+        `category`
+        <where>
+            isDeleted = 0
+            <if test="categoryType != null and categoryType > 0">
+                AND category_type = #{categoryType}
+            </if>
+        </where>
+        ORDER BY
+        sort
     </select>
 
 

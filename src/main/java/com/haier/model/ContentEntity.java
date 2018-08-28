@@ -12,6 +12,8 @@ public class ContentEntity {
 
     private Long id;
 
+    private Long version;
+
     private String city;
 
     private String entryTime;
@@ -21,6 +23,10 @@ public class ContentEntity {
     private String content;
 
     private Integer status;
+
+    private String remark;//备注
+
+    private Long categoryId;
 
 
     @JsonIgnore

@@ -10,6 +10,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
+import io.swagger.models.auth.In;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,12 +34,14 @@ public class ContentController {
     @RequestMapping(value = "/add", method = RequestMethod.POST, produces = "application/json")
     public RespResult addModuleItem(
             @ApiParam(value = "城市", required = true) @RequestParam(required = true, name = "city") String city,
-            @ApiParam(value = "时间", required = true) @RequestParam(required = true, name = "entryTime") String entryTime,
-            @ApiParam(value = "内容类型", required = false, defaultValue = "1") @RequestParam(required = true, name = "type") Integer type,
-            @ApiParam(value = "内容详情", required = false) @RequestParam(required = false, name = "content") String content) {
+            @ApiParam(value = "时间", required = false) @RequestParam(required = false, name = "entryTime") String entryTime,
+            @ApiParam(value = "内容类型", required = true, defaultValue = "1") @RequestParam(required = true, name = "type") Integer type,
+            @ApiParam(value = "内容详情", required = true) @RequestParam(required = true, name = "content") String content,
+            @ApiParam(value = "备注", required = false) @RequestParam(required = false, name = "remark") String remark,
+            @ApiParam(value = "类别", required = true) @RequestParam(required = true, name = "categoryId") Long categoryId) {
         RespResult respResult = new RespResult();
         ContentEntity addEn = new ContentEntity();
-        addEn.setCity(city).setEntryTime(entryTime).setType(type).setContent(content);
+        addEn.setCity(city).setEntryTime(entryTime).setType(type).setContent(content).setRemark(remark).setCategoryId(categoryId);
         if (Objects.nonNull(addEn)) {
             return contentService.addNewContent(addEn);
         } else {
@@ -52,18 +55,20 @@ public class ContentController {
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
     @RequestMapping(value = "/upd", method = RequestMethod.POST)
     public RespResult updModuleItem(
-            @ApiParam(value = "id", required = true) @RequestParam(required = true, name = "id") Long id,
+            @ApiParam(value = "version", required = true) @RequestParam(required = true, name = "version") Long version,
             @ApiParam(value = "城市", required = false) @RequestParam(required = false, name = "city") String city,
             @ApiParam(value = "时间", required = false) @RequestParam(required = false, name = "entryTime") String entryTime,
             @ApiParam(value = "内容类型", required = false, defaultValue = "1") @RequestParam(required = false, name = "type") Integer type,
-            @ApiParam(value = "内容详情", required = false) @RequestParam(required = false, name = "content") String content) {
+            @ApiParam(value = "内容详情", required = false) @RequestParam(required = false, name = "content") String content,
+            @ApiParam(value = "备注", required = false) @RequestParam(required = false, name = "remark") String remark,
+            @ApiParam(value = "类别", required = true) @RequestParam(required = false, name = "categoryId") Long categoryId) {
         RespResult respResult = new RespResult();
         ContentEntity updEn = new ContentEntity();
         updEn.setCity(city)
                 .setEntryTime(entryTime)
-                .setType(type).setContent(content);
-        if (Objects.nonNull(updEn) && id != null && id > 0) {
-            return contentService.updContentById(updEn, id);
+                .setType(type).setContent(content).setRemark(remark).setCategoryId(categoryId);
+        if (Objects.nonNull(updEn) && version != null && version > 0) {
+            return contentService.updContentByVersion(updEn, version);
         } else {
             respResult.setCode(IMRespEnum.PARAM_ERROR.getCode());
             respResult.setMsg(IMRespEnum.PARAM_ERROR.getMsg());
@@ -75,10 +80,10 @@ public class ContentController {
     @ApiOperation(value = "删除内容信息", httpMethod = "DELETE", notes = "删除模块信息")
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
     @RequestMapping(value = "/del", method = RequestMethod.DELETE)
-    public RespResult delModuleItem(@RequestParam Long id) {
+    public RespResult delModuleItem(@RequestParam Long version) {
         RespResult respResult = new RespResult();
-        if (Objects.nonNull(id)) {
-            respResult = contentService.delContentById(id);
+        if (Objects.nonNull(version)) {
+            respResult = contentService.delContentByVersion(version);
         } else {
             respResult.setCode(IMRespEnum.PARAM_ERROR.getCode());
             respResult.setMsg(IMRespEnum.PARAM_ERROR.getMsg());
@@ -89,11 +94,11 @@ public class ContentController {
 
     @ApiOperation(value = "内容详情", httpMethod = "GET", notes = "模块详情")
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
-    @RequestMapping(value = "/findById", method = RequestMethod.GET)
-    public RespResult findItemById(@ApiParam(value = "id", required = true) @RequestParam(name = "id", required = true) Long id) {
+    @RequestMapping(value = "/findByVersion", method = RequestMethod.GET)
+    public RespResult findItemById(@ApiParam(value = "version", required = true) @RequestParam(name = "version", required = true) Long version) {
         RespResult respResult = new RespResult();
-        if (Objects.nonNull(id) && id > 0) {
-            respResult = contentService.findContentById(id);
+        if (Objects.nonNull(version) && version > 0) {
+            respResult = contentService.findContentByVersion(version);
         } else {
             respResult.setCode(IMRespEnum.PARAM_ERROR.getCode());
             respResult.setMsg(IMRespEnum.PARAM_ERROR.getMsg());
@@ -103,10 +108,10 @@ public class ContentController {
 
     @ApiOperation(value = "城市的所有最新类型数据", httpMethod = "GET", notes = "城市数据")
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
-    @RequestMapping(value = "/list/city", method = RequestMethod.GET)
+    @RequestMapping(value = "/list/Forcity", method = RequestMethod.GET)
     public RespResult findItemById(
             @ApiParam(value = "录入时间", required = false) @RequestParam(name = "entryTime", required = false) String entryTime,
-            @ApiParam(value = "城市", required = true) @RequestParam(name = "city", required = false) String city
+            @ApiParam(value = "城市", required = false) @RequestParam(name = "city", required = false) String city
             ) {
         RespResult respResult = new RespResult();
         if (Objects.nonNull(city) && StringUtils.isNotEmpty(city.trim())) {
@@ -119,17 +124,37 @@ public class ContentController {
     }
 
 
+
+    @ApiOperation(value = "根据type获取的所有最新类型数据", httpMethod = "GET", notes = "内容数据")
+    @ApiResponse(code = 200, message = "success", response = RespResult.class)
+    @RequestMapping(value = "/list/Fortype", method = RequestMethod.GET)
+    public RespResult findItemByType(
+            @ApiParam(value = "录入时间", required = false) @RequestParam(name = "entryTime", required = false) String entryTime,
+            @ApiParam(value = "城市", required = false) @RequestParam(name = "city", required = false) String city,
+            @ApiParam(value = "type", required = true) @RequestParam(name = "type", required = false) Integer type
+    ) {
+        RespResult respResult = new RespResult();
+        if (Objects.nonNull(type) && type > 0) {
+            respResult = contentService.findAllForType(city,entryTime,type);
+        } else {
+            respResult.setCode(IMRespEnum.PARAM_ERROR.getCode());
+            respResult.setMsg(IMRespEnum.PARAM_ERROR.getMsg());
+        }
+        return respResult;
+    }
+
+
     @ApiOperation(value = "模块上下线", httpMethod = "POST", notes = "模块上下线")
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
     @RequestMapping(value = "/changeStatus", method = RequestMethod.POST)
-    public RespResult changeStatus(@ApiParam(value = "id", required = true) @RequestParam(name = "id", required = true) Long id,
+    public RespResult changeStatus(@ApiParam(value = "version", required = true) @RequestParam(name = "version", required = true) Long version,
                                    @ApiParam(value = "状态，1：上线，2：下线", required = true) @RequestParam(name = "status", required = true) Integer status) {
         RespResult respResult = new RespResult();
-        if (Objects.nonNull(id) && id > 0) {
+        if (Objects.nonNull(version) && version > 0) {
             if (status.equals(1) || status.equals(2)) {
                 ContentEntity updEn = new ContentEntity();
                 updEn.setStatus(status);
-                respResult = contentService.updContentById(updEn, id);
+                respResult = contentService.updContentByVersion(updEn, version);
             } else {
                 respResult.setMsg(IMRespEnum.PARAM_ERROR_MoDULE_STATUS.getMsg());
                 respResult.setCode(IMRespEnum.PARAM_ERROR_MoDULE_STATUS.getCode());
@@ -175,6 +200,16 @@ public class ContentController {
         }
         return respResult;
     }
+
+
+    @ApiOperation(value = "类别list", httpMethod = "GET", notes = "类别")
+    @ApiResponse(code = 200, message = "success", response = RespResult.class)
+    @RequestMapping(value = "/list/category", method = RequestMethod.GET)
+    public RespResult listCategory( @ApiParam(value = "类别类型", required = false) @RequestParam(name = "categoryType", required = false) Integer categoryType
+    ) {
+       return contentService.listCategory(categoryType);
+    }
+
 
 }
 

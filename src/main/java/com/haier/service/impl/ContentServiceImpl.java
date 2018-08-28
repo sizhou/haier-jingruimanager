@@ -5,8 +5,10 @@ import com.google.common.collect.Maps;
 import com.haier.base.IMRespEnum;
 import com.haier.base.RespResult;
 import com.haier.controller.po.ContentForCityResp;
+import com.haier.controller.po.ContentForTypeResp;
 import com.haier.controller.po.ContentListResp;
 import com.haier.dao.ContentMapper;
+import com.haier.model.CategoryEntity;
 import com.haier.model.ContentEntity;
 import com.haier.po.ContentEntityPo;
 import com.haier.service.ContentService;
@@ -31,6 +33,8 @@ public class ContentServiceImpl implements ContentService {
         RespResult respResult = new RespResult();
         contentEntity.setCreatedTime(new Date());
         int result = contentMapper.addNewContent(contentEntity);
+        if(contentEntity.getId() != null && contentEntity.getId() > 0 )
+            contentMapper.updVersionById(contentEntity.getId());
         if (result > 0) {
             respResult.setCode(IMRespEnum.SUCCESS.getCode());
             respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -42,9 +46,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public RespResult delContentById(Long id) {
+    public RespResult delContentByVersion(Long version) {
         RespResult respResult = new RespResult();
-        int result = contentMapper.updDelById(id);
+        int result = contentMapper.updDelByVersion(version);
         if (result > 0) {
             respResult.setCode(IMRespEnum.SUCCESS.getCode());
             respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -56,10 +60,10 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public RespResult updContentById(ContentEntity updEn, Long id) {
+    public RespResult updContentByVersion(ContentEntity updEn, Long version) {
         RespResult respResult = new RespResult();
         updEn.setUpdatedTime(new Date());
-        int result = contentMapper.updContentById(updEn, id);
+        int result = contentMapper.updContentByVersion(updEn, version);
         if (result > 0) {
             respResult.setCode(IMRespEnum.SUCCESS.getCode());
             respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -71,9 +75,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public RespResult findContentById(Long id) {
+    public RespResult findContentByVersion(Long version) {
         RespResult respResult = new RespResult();
-        ContentEntity contentEntity = contentMapper.findSingleContentById(id);
+        ContentEntity contentEntity = contentMapper.findSingleContentByVersion(version);
         respResult.setData(contentEntity);
         respResult.setCode(IMRespEnum.SUCCESS.getCode());
         respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -116,7 +120,7 @@ public class ContentServiceImpl implements ContentService {
 
 
     @Override
-    public RespResult findAllTypeForCity(String city, String entryTime) {
+    public RespResult findAllTypeForCity(String city,String entryTime) {
         RespResult respResult = new RespResult();
         ContentEntityPo findEn = new ContentEntityPo();
         findEn.setCity(city);
@@ -158,5 +162,51 @@ public class ContentServiceImpl implements ContentService {
         respResult.setCode(IMRespEnum.SUCCESS.getCode());
         respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
         return respResult;
+    }
+
+
+    @Override
+    public RespResult listCategory(Integer categoryType) {
+        RespResult<List<CategoryEntity>> resp = new RespResult<>();
+        List<CategoryEntity> list = contentMapper.listCategory(categoryType);
+        resp.setData(list);
+        resp.setCode(IMRespEnum.SUCCESS.getCode());
+        resp.setMsg(IMRespEnum.SUCCESS.getMsg());
+        return resp;
+    }
+
+
+    @Override
+    public RespResult<ContentForTypeResp> findAllForType(String city, String entryTime, Integer type) {
+        RespResult<ContentForTypeResp> resp = new RespResult<>();
+        ContentEntityPo findEn = new ContentEntityPo();
+        findEn.setCity(city);
+        findEn.setOrderClause("entry_time");
+        if (null != entryTime || StringUtils.isNotEmpty(entryTime)) {
+            findEn.setEntryTime(entryTime);
+        }
+        findEn.setType(type);
+        findEn.setStatus(1);
+        findEn.setIsDelete(false);
+        List<ContentEntity> list = contentMapper.findContentsBy(findEn);
+        if (null != list && list.size() > 0){
+            //最新的category
+            Map<Long, ContentEntity> categoryMap = Maps.newLinkedHashMap();
+            for (ContentEntity en : list) {
+                categoryMap.put(en.getCategoryId(), en);
+            }
+            if (null != categoryMap && categoryMap.size() > 0){
+                ContentForTypeResp respData= new ContentForTypeResp();
+                respData.setType(type);
+                List<ContentEntity> categoryList = Lists.newArrayList();
+                categoryMap.forEach((k,v)->categoryList.add(v));
+                respData.setCategoryList(categoryList);
+                resp.setData(respData);
+            }
+
+        }
+        resp.setCode(IMRespEnum.SUCCESS.getCode());
+        resp.setMsg(IMRespEnum.SUCCESS.getMsg());
+        return resp;
     }
 }
