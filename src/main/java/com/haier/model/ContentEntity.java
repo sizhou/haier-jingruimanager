@@ -1,6 +1,7 @@
 package com.haier.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.haier.controller.po.ContentAddReq;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -28,6 +29,10 @@ public class ContentEntity {
 
     private Long categoryId;
 
+    private Long moduleId;
+
+    private Long explainId;
+
 
     @JsonIgnore
     private Long createdBy;
@@ -45,5 +50,12 @@ public class ContentEntity {
     private Boolean isDelete;
 
 
+    public ContentEntity coverToEntity(ContentAddReq req,ContentEntity entity){
+        entity.setModuleId(req.getModuleId()).setCategoryId(req.getCategoryId())
+                .setCity(req.getCity()).setEntryTime(req.getEntryTime())
+                .setType(req.getType()).setContent(req.getContent())
+                .setRemark(req.getRemark()).setStatus(req.getStatus());
+        return entity;
+    }
 
 }

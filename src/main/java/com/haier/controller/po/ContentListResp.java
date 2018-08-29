@@ -27,6 +27,6 @@ public class ContentListResp {
     private Integer pageSize;
 
     @ApiModelProperty(value = "列表")
-    private List<ContentEntity> list;
+    private List<ContentPo> list;
 
 }

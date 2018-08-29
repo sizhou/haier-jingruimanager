@@ -3,17 +3,25 @@
 <mapper namespace="com.haier.dao.ContentMapper">
 
     <sql id="SELECT_CLOUMN">
-        id AS id,
-        version AS version,
-        city AS city,
-        entry_time AS entryTime,
-        `type` AS type,
-        content AS content,
-        status AS status,
-        remark AS remark,
-        category_id AS categoryId,
-        createdTime AS createdTime,
-        isDeleted AS isDelete
+        c.id AS id,
+        c.version AS version,
+        c.module_id AS moduleId,
+        c.city AS city,
+        c.entry_time AS entryTime,
+        c.`type` AS type,
+        c.content AS content,
+        c.status AS status,
+        c.remark AS remark,
+        c.category_id AS categoryId,
+        c.explain_id AS explainId,
+        c.createdTime AS createdTime,
+        c.isDeleted AS isDelete,
+        p.effect_time AS effectTime,
+        p.valid_time AS validTime,
+        p.max_period AS maxPeriod,
+        p.capping_period AS cappingPeriod
+        FROM content c
+        LEFT JOIN period_explain p ON c.explain_id = p.id
     </sql>
 
 
@@ -33,13 +41,19 @@
                 `type` ,
             </if>
             <if test="content != null">
-                content ,
+                `content`,
             </if>
             <if test="remark != null">
-                remark,
+                `remark`,
             </if>
             <if test="categoryId != null">
-                category_id,
+                `category_id`,
+            </if>
+            <if test="moduleId != null and moduleId > 0">
+                `module_id`,
+            </if>
+            <if test="explainId != null and explainId > 0">
+                `explain_id`,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -60,6 +74,12 @@
             </if>
             <if test="categoryId != null">
                 #{categoryId},
+            </if>
+            <if test="moduleId != null and moduleId > 0">
+                #{moduleId},
+            </if>
+            <if test="explainId != null and explainId > 0">
+                #{explainId},
             </if>
         </trim>
 
@@ -112,38 +132,40 @@
         where version =#{version}
     </update>
 
-    <select id="findSingleContentByVersion" resultType="com.haier.model.ContentEntity">
+    <select id="findSingleContentByVersion" resultType="com.haier.controller.po.ContentPo">
         SELECT
         <include refid="SELECT_CLOUMN"/>
-        FROM content
-        WHERE version =#{version}
+        WHERE c.version =#{version}
     </select>
 
-    <select id="findContentsBy" resultType="com.haier.model.ContentEntity">
+    <select id="findContentsBy" resultType="com.haier.controller.po.ContentPo">
         SELECT
         <include refid="SELECT_CLOUMN"/>
-        FROM content
         <where>
             <if test="findEn.id != null">
-                AND id = #{findEn.id}
+                AND c.id = #{findEn.id}
             </if>
             <if test="findEn.city != null">
-                AND city = #{findEn.city}
+                AND c.city = #{findEn.city}
             </if>
             <if test="findEn.entryTime != null">
-                AND entry_time = #{findEn.entryTime}
+                AND c.entry_time = #{findEn.entryTime}
             </if>
             <if test="findEn.type != null">
-                AND type = #{findEn.type}
+                AND c.type = #{findEn.type}
             </if>
             <if test="findEn.status != null">
-                AND status = #{findEn.status}
+                AND c.status = #{findEn.status}
             </if>
             <if test="findEn.isDelete != null">
-                AND isDeleted = #{findEn.isDelete}
+                AND c.isDeleted = #{findEn.isDelete}
+            </if>
+            <if test="findEn.moduleId != null">
+                AND c.module_id =#{findEn.moduleId}
             </if>
             <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
-                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr} OR type LIKE #{findEn.searchAttr})
+                AND (c.city like #{findEn.searchAttr} OR c.entry_time LIKE #{findEn.searchAttr} OR c.type LIKE
+                #{findEn.searchAttr})
             </if>
         </where>
         <if test="findEn.orderClause != null and findEn.orderClause != ''">
@@ -156,25 +178,29 @@
     <select id="countBy" resultType="java.lang.Integer">
         SELECT
         COUNT(*)
-        FROM content
+        FROM content c
         <where>
             <if test="findEn.id != null">
-                AND id = #{findEn.id}
+                AND c.id = #{findEn.id}
             </if>
             <if test="findEn.city != null">
-                AND city = #{findEn.city}
+                AND c.city = #{findEn.city}
             </if>
             <if test="findEn.entryTime != null">
-                AND entry_time = #{findEn.entryTime}
+                AND c.entry_time = #{findEn.entryTime}
             </if>
             <if test="findEn.status != null">
-                AND status = #{findEn.status}
+                AND c.status = #{findEn.status}
             </if>
             <if test="findEn.isDelete != null">
-                AND isDeleted = #{findEn.isDelete}
+                AND c.isDeleted = #{findEn.isDelete}
+            </if>
+            <if test="findEn.moduleId != null">
+                AND c.module_id =#{findEn.moduleId}
             </if>
             <if test="findEn.searchAttr != null and findEn.searchAttr != ''">
-                AND (city like #{findEn.searchAttr} OR entry_time LIKE #{findEn.searchAttr})
+                AND (c.city like #{findEn.searchAttr} OR c.entry_time LIKE #{findEn.searchAttr}  OR c.type LIKE
+                #{findEn.searchAttr})
             </if>
         </where>
     </select>
@@ -194,6 +220,69 @@
         ORDER BY
         sort
     </select>
+
+
+    <insert id="addNewExplain">
+        <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        INSERT INTO `period_explain`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="effectTime != null">
+                `effect_time`,
+            </if>
+            <if test="validTime != null">
+                `valid_time`,
+            </if>
+            <if test="maxPeriod != null">
+                `max_period`,
+            </if>
+            <if test="cappingPeriod !=null">
+                `capping_period`,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="effectTime != null">
+                #{effectTime},
+            </if>
+            <if test="validTime != null">
+                #{validTime},
+            </if>
+            <if test="maxPeriod != null">
+               #{maxPeriod},
+            </if>
+            <if test="cappingPeriod !=null">
+                #{cappingPeriod},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updExplain">
+        update `period_explain`
+        <set>
+            <if test="updEn.effectTime != null">
+                `effect_time` = #{updEn.effectTime},
+            </if>
+
+            <if test="updEn.validTime != null">
+                `valid_time`= #{updEn.validTime},
+            </if>
+            <if test="updEn.maxPeriod != null">
+                `max_period` = #{updEn.maxPeriod},
+            </if>
+            <if test="updEn.cappingPeriod !=null">
+                `capping_period`= #{updEn.cappingPeriod},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <delete id="delExplain">
+        DELETE
+        FROM
+            `period_explain`
+        WHERE
+            id = #{id}
+    </delete>
 
 
 </mapper>
